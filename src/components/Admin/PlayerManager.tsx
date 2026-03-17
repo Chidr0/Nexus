@@ -185,13 +185,6 @@ const PlayerManagerReducer: Reducer<Player[], ReducerActions<PlayerManagerAction
 			}
 			break;
 		}
-		case 'updateSpec': {
-			const spec = players[playerIndex].PlayerSpec.find(
-				(s) => s.Spec.id === action.data[1]
-			);
-			if (spec) spec.value = action.data[2];
-			break;
-		}
 		case 'addEquipment':
 			players[playerIndex].PlayerEquipment.push({ Equipment: action.data[1] });
 			break;
@@ -246,7 +239,7 @@ const PlayerManagerReducer: Reducer<Player[], ReducerActions<PlayerManagerAction
 			players[playerIndex].spellSlots = action.data[1];
 			break;
 	}
-	return [...players];
+	return[...players];
 };
 
 type PlayerManagerProps = {
@@ -276,10 +269,10 @@ export default function PlayerManager(props: PlayerManagerProps) {
 			dispatch({ type: 'updateName', data: [playerId, value] })
 		);
 		socket.on('playerInfoChange', (playerId, infoId, value) =>
-			dispatch({ type: 'updateInfo', data: [playerId, infoId, value] })
+			dispatch({ type: 'updateInfo', data:[playerId, infoId, value] })
 		);
 		socket.on('playerAttributeChange', (playerId, id, value, maxValue) =>
-			dispatch({ type: 'updateAttribute', data: [playerId, id, value, maxValue, false] })
+			dispatch({ type: 'updateAttribute', data:[playerId, id, value, maxValue, false] })
 		);
 		socket.on('playerSpecChange', (playerId, id, value) =>
 			dispatch({ type: 'updateSpec', data: [playerId, id, value] })
@@ -291,7 +284,7 @@ export default function PlayerManager(props: PlayerManagerProps) {
 			dispatch({ type: 'updateCharacteristic', data: [playerId, id, value, modifier] })
 		);
 		socket.on('playerSkillChange', (playerId, id, value, modifier) =>
-			dispatch({ type: 'updateSkill', data: [playerId, id, value, modifier] })
+			dispatch({ type: 'updateSkill', data:[playerId, id, value, modifier] })
 		);
 		socket.on('playerEquipmentAdd', (playerId, equipment) =>
 			dispatch({ type: 'addEquipment', data: [playerId, equipment] })
@@ -300,7 +293,7 @@ export default function PlayerManager(props: PlayerManagerProps) {
 			dispatch({ type: 'removeEquipment', data: [playerId, id] })
 		);
 		socket.on('playerItemAdd', (playerId, item, description, quantity) =>
-			dispatch({ type: 'addItem', data: [playerId, item, description, quantity] })
+			dispatch({ type: 'addItem', data:[playerId, item, description, quantity] })
 		);
 		socket.on('playerItemRemove', (playerId, id) =>
 			dispatch({ type: 'removeItem', data: [playerId, id] })
@@ -309,7 +302,7 @@ export default function PlayerManager(props: PlayerManagerProps) {
 			dispatch({ type: 'updateItem', data: [playerId, id, description, quantity] })
 		);
 		socket.on('playerSpellAdd', (playerId, spell) =>
-			dispatch({ type: 'addSpell', data: [playerId, spell] })
+			dispatch({ type: 'addSpell', data:[playerId, spell] })
 		);
 		socket.on('playerSpellRemove', (playerId, id) =>
 			dispatch({ type: 'removeSpell', data: [playerId, id] })
@@ -341,7 +334,7 @@ export default function PlayerManager(props: PlayerManagerProps) {
 			socket.off('playerSpellSlotsChange');
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	},[]);
 
 	if (players.length === 0)
 		return (
@@ -356,19 +349,40 @@ export default function PlayerManager(props: PlayerManagerProps) {
 				<Col key={player.id} xs={12} md={6} xl={4} className='h-100 my-2'>
 					<Row className='player-container text-center'>
 						<Col>
-							<Row className='my-2'>
-								<Col>
+							{/* BARRINHA DE BOTÕES (APAGAR - FICHA - RETRATO) */}
+							<Row className='my-3 align-items-center justify-content-between px-3'>
+								<Col xs='auto' className='px-0'>
 									<Button
 										size='sm'
 										variant='secondary'
+										style={{ backgroundColor: '#3b2259', borderColor: '#3b2259', opacity: 0.8 }}
 										onClick={() => onDeletePlayer(player.id)}>
 										Apagar
 									</Button>
 								</Col>
-								<Col>
+								<Col xs='auto' className='px-0'>
+									{/* Usando um link real para evitar bloqueio de pop-up */}
+									<a 
+										href={`/sheet/player/1?playerId=${player.id}`} 
+										target="_blank" 
+										rel="noreferrer" 
+										style={{ textDecoration: 'none' }}
+									>
+										<Button
+											size='sm'
+											variant='secondary'
+											style={{ backgroundColor: '#8a2be2', borderColor: '#8a2be2', fontWeight: 'bold' }}
+										>
+											FICHA
+										</Button>
+									</a>
+								</Col>
+								<Col xs='auto' className='px-0'>
 									<PlayerPortraitButton playerId={player.id} />
 								</Col>
 							</Row>
+							{/* FIM DA BARRINHA DE BOTÕES */}
+
 							<Row>
 								<AvatarField
 									playerId={player.id}

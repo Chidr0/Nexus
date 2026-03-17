@@ -13,7 +13,8 @@ function handler(req: NextApiRequest, res: NextApiResponseServerIO) {
 async function handlePost(req: NextApiRequest, res: NextApiResponseServerIO) {
 	const player = req.session.player;
 
-	if (!player || !player.admin) {
+	// TRAVA REMOVIDA: Agora qualquer jogador logado pode editar os itens
+	if (!player) {
 		res.status(401).end();
 		return;
 	}
@@ -44,7 +45,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponseServerIO) {
 async function handlePut(req: NextApiRequest, res: NextApiResponseServerIO) {
 	const player = req.session.player;
 
-	if (!player || !player.admin) {
+	// TRAVA REMOVIDA: Agora qualquer jogador logado pode criar itens novos
+	if (!player) {
 		res.status(401).end();
 		return;
 	}
@@ -70,6 +72,7 @@ async function handlePut(req: NextApiRequest, res: NextApiResponseServerIO) {
 async function handleDelete(req: NextApiRequest, res: NextApiResponseServerIO) {
 	const player = req.session.player;
 
+	// Mantido apenas para admin, assim jogadores não excluem o item do banco de dados (apenas do inventário deles)
 	if (!player || !player.admin) {
 		res.status(401).end();
 		return;

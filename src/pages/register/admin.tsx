@@ -19,7 +19,7 @@ import prisma from '../../utils/database';
 export default function Register(
 	props: InferGetServerSidePropsType<typeof getServerSideProps>
 ) {
-	const [loading, setLoading] = useState(true);
+	const[loading, setLoading] = useState(true);
 	const [toasts, addToast] = useToast();
 
 	useAuthentication((player) => {
@@ -59,50 +59,56 @@ export default function Register(
 
 	if (loading)
 		return (
-			<Container className='text-center'>
-				<Row className='align-items-center' style={{ height: '90vh' }}>
-					<Col>
-						<Spinner animation='border' variant='secondary' />
-					</Col>
-				</Row>
+			<Container className='text-center d-flex align-items-center justify-content-center' style={{ height: '100vh' }}>
+				<Spinner animation='border' style={{ color: '#8a2be2' }} />
 			</Container>
 		);
 
 	return (
-		<div>
+		<>
 			<ApplicationHead title='Cadastro de Mestre' />
-			<Container className='text-center mt-2'>
-				<Row>
-					<Col>
-						<h1>
-							<label htmlFor='username'>Cadastro de Mestre</label>
-						</h1>
-					</Col>
-				</Row>
-				<RegisterForm onSubmit={onFormSubmit} disableKey={props.firstAdmin} />
-				<Row>
-					<Col>
-						<Row className='my-3'>
-							<Col>
-								Já possui cadastro?{' '}
-								<Link href='/'>
-									<a className={homeStyles.link}>Entrar</a>
+			<Container className='d-flex align-items-center justify-content-center' style={{ minHeight: '80vh', marginTop: '2rem', marginBottom: '2rem' }}>
+				<div
+					style={{
+						backgroundColor: '#150d22',
+						padding: '40px',
+						borderRadius: '15px',
+						border: '1px solid #3b2259',
+						boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.7)',
+						width: '100%',
+						maxWidth: '450px',
+					}}
+				>
+					<Row className='text-center mb-4'>
+						<Col>
+							<h1 style={{ color: '#c4a7e7', fontWeight: 'bold', textShadow: '0 0 10px rgba(138, 43, 226, 0.3)' }}>
+								<label htmlFor='username'>Novo Mestre</label>
+							</h1>
+						</Col>
+					</Row>
+
+					<RegisterForm onSubmit={onFormSubmit} disableKey={props.firstAdmin} />
+
+					<Row className='text-center mt-4'>
+						<Col>
+							<div className='mb-2'>
+								<span className='me-2' style={{ color: '#9d8db3' }}>Já possui cadastro?</span>
+								<Link href='/' passHref>
+									<a className={homeStyles.link} style={{ color: '#b175ff', fontWeight: 'bold' }}>Entrar</a>
 								</Link>
-							</Col>
-						</Row>
-						<Row className='my-3'>
-							<Col>
-								É um jogador?{' '}
-								<Link href='/register'>
-									<a className={homeStyles.link}>Cadastrar-se como jogador</a>
+							</div>
+							<div>
+								<span className='me-2' style={{ color: '#5c4d75', fontSize: '0.85rem' }}>É um jogador?</span>
+								<Link href='/register' passHref>
+									<a className={homeStyles.link} style={{ color: '#8a2be2', fontSize: '0.85rem' }}>Cadastrar-se como jogador</a>
 								</Link>
-							</Col>
-						</Row>
-					</Col>
-				</Row>
+							</div>
+						</Col>
+					</Row>
+				</div>
 			</Container>
 			<ErrorToastContainer toasts={toasts} />
-		</div>
+		</>
 	);
 }
 
@@ -116,9 +122,9 @@ function RegisterForm(props: {
 	disableKey: boolean;
 }) {
 	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
+	const[password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
-	const [adminKey, setAdminKey] = useState(props.disableKey ? 'disabled' : '');
+	const[adminKey, setAdminKey] = useState(props.disableKey ? 'disabled' : '');
 
 	return (
 		<form
@@ -129,20 +135,27 @@ function RegisterForm(props: {
 				if (!props.disableKey) setAdminKey('');
 				props.onSubmit(username, password, confirmPassword, adminKey);
 			}}>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-3 justify-content-center'>
+				<Col>
 					<FormControl
 						className='text-center theme-element'
-						placeholder='Login'
+						placeholder='Nome de Usuário'
 						id='username'
 						name='username'
 						value={username}
 						onChange={(e) => setUsername(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-3 justify-content-center'>
+				<Col>
 					<FormControl
 						type='password'
 						className='text-center theme-element'
@@ -151,11 +164,18 @@ function RegisterForm(props: {
 						name='password'
 						value={password}
 						onChange={(e) => setPassword(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-4 justify-content-center'>
+				<Col>
 					<FormControl
 						type='password'
 						className='text-center theme-element'
@@ -164,16 +184,35 @@ function RegisterForm(props: {
 						name='confirmPassword'
 						value={confirmPassword}
 						onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
+			
 			{props.disableKey ? (
-				<label>
-					Chave do mestre desabilitada para o primeiro cadastro de mestre.
-				</label>
+				<Row className='mb-4 text-center justify-content-center'>
+					<Col>
+						<div style={{
+							backgroundColor: 'rgba(138, 43, 226, 0.1)',
+							border: '1px solid rgba(138, 43, 226, 0.3)',
+							borderRadius: '8px',
+							padding: '10px',
+							color: '#c4a7e7',
+							fontSize: '0.85rem'
+						}}>
+							Chave do mestre desabilitada para o primeiro cadastro.
+						</div>
+					</Col>
+				</Row>
 			) : (
-				<Row className='my-3 justify-content-center'>
-					<Col md={6}>
+				<Row className='mb-4 justify-content-center'>
+					<Col>
 						<FormControl
 							type='password'
 							className='text-center theme-element'
@@ -182,14 +221,34 @@ function RegisterForm(props: {
 							name='adminKey'
 							value={adminKey}
 							onChange={(e) => setAdminKey(e.currentTarget.value)}
+							style={{
+								backgroundColor: '#0b0710',
+								borderColor: '#8a2be2', // Borda em destaque pra chave do mestre
+								color: '#fff',
+								padding: '12px',
+								borderRadius: '8px',
+								boxShadow: 'inset 0 0 5px rgba(138, 43, 226, 0.2)'
+							}}
 						/>
 					</Col>
 				</Row>
 			)}
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
-					<Button type='submit' variant='secondary'>
-						Cadastrar-se
+			
+			<Row className='justify-content-center'>
+				<Col>
+					<Button 
+						type='submit' 
+						className='w-100'
+						style={{
+							backgroundColor: '#8a2be2',
+							borderColor: '#8a2be2',
+							fontWeight: 'bold',
+							padding: '10px',
+							borderRadius: '8px',
+							boxShadow: '0 4px 15px rgba(138, 43, 226, 0.4)'
+						}}
+					>
+						CRIAR CONTA DE MESTRE
 					</Button>
 				</Col>
 			</Row>

@@ -13,7 +13,8 @@ function handler(req: NextApiRequest, res: NextApiResponseServerIO) {
 async function handlePost(req: NextApiRequest, res: NextApiResponseServerIO) {
 	const player = req.session.player;
 
-	if (!player || !player.admin) {
+	// TRAVA REMOVIDA: Jogadores agora podem editar
+	if (!player) {
 		res.status(401).end();
 		return;
 	}
@@ -74,7 +75,8 @@ async function handlePost(req: NextApiRequest, res: NextApiResponseServerIO) {
 async function handlePut(req: NextApiRequest, res: NextApiResponseServerIO) {
 	const player = req.session.player;
 
-	if (!player || !player.admin) {
+	// TRAVA REMOVIDA: Jogadores agora podem criar
+	if (!player) {
 		res.status(401).end();
 		return;
 	}
@@ -132,6 +134,7 @@ async function handlePut(req: NextApiRequest, res: NextApiResponseServerIO) {
 async function handleDelete(req: NextApiRequest, res: NextApiResponseServerIO) {
 	const player = req.session.player;
 
+	// MANTIDO: Só o admin apaga do banco de dados geral
 	if (!player || !player.admin) {
 		res.status(401).end();
 		return;

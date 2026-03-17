@@ -25,6 +25,7 @@ import DataContainer from '../DataContainer';
 import AddDataModal from '../Modals/AddDataModal';
 import type { Trade } from '../Modals/PlayerTradeModal';
 import PlayerTradeModal from '../Modals/PlayerTradeModal';
+import ItemEditorModal from '../Modals/ItemEditorModal';
 
 type PlayerItemContainerProps = {
 	playerItems: {
@@ -57,7 +58,7 @@ const tradeTimeLimit = 10000;
 
 export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 	const [addItemModalShow, setAddItemModalShow] = useState(false);
-	const [availableItems, setAvailableItems] = useState<{ id: number; name: string }[]>(
+	const[availableItems, setAvailableItems] = useState<{ id: number; name: string }[]>(
 		props.availableItems
 	);
 	const [playerItems, setPlayerItems] = useState(props.playerItems);
@@ -69,6 +70,11 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 	const [trade, setTrade] = useState<Trade<Item>>(tradeInitialValue);
 	const currentTradeId = useRef<number | null>(null);
 	const tradeTimeout = useRef<NodeJS.Timeout | null>(null);
+
+	// Novos estados para a edição/criação customizada
+	const [itemEditorModalShow, setItemEditorModalShow] = useState(false);
+	const[itemEditorData, setItemEditorData] = useState<Item | undefined>(undefined);
+	const[itemEditorOperation, setItemEditorOperation] = useState<'create' | 'edit'>('create');
 
 	const logError = useContext(ErrorLogger);
 	const socket = useContext(Socket);
@@ -123,7 +129,7 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 			if (playerIndex === -1) return;
 
 			setPlayerItems((items) => {
-				const newItems = [...items];
+				const newItems =[...items];
 				newItems[playerIndex].Item = it;
 				return newItems;
 			});
@@ -245,7 +251,37 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 			socket.off('playerTradeResponse');
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	},[]);
+
+	// Lógica para criar Item Customizado direto da ficha
+	function onItemCreateSubmit(item: Item) {
+		setLoading(true);
+		api
+			.put('/sheet/item', item)
+			.then((res) => {
+				// Cria o item no banco e já joga pro inventário do player!
+				return api.put('/sheet/player/item', { id: res.data.id, npcId: props.npcId });
+			})
+			.then((res) => {
+				const newItem = res.data.item;
+				setPlayerItems([...playerItems, newItem]);
+				setItemEditorModalShow(false);
+			})
+			.catch(logError)
+			.finally(() => setLoading(false));
+	}
+
+	// Lógica para editar o Item com duplo clique
+	function onItemEditSubmit(item: Item) {
+		setLoading(true);
+		api
+			.post('/sheet/item', item)
+			.catch(logError)
+			.finally(() => {
+				setLoading(false);
+				setItemEditorModalShow(false);
+			});
+	}
 
 	function onAddItem(id: number) {
 		setLoading(true);
@@ -367,7 +403,7 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 
 	const playerItemList = useMemo(() => {
 		return playerItems.sort((a, b) => a.Item.id - b.Item.id);
-	}, [playerItems]);
+	},[playerItems]);
 
 	return (
 		<>
@@ -385,6 +421,25 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 					))}
 				</Row>
 				<hr />
+				
+				{/* Botão de Criar Item Customizado */}
+				<Row className='mb-3 justify-content-center'>
+					<Col xs='auto'>
+						<Button 
+							size='sm' 
+							variant='secondary' 
+							style={{ backgroundColor: '#6f42c1', borderColor: '#6f42c1' }}
+							onClick={() => {
+								setItemEditorData(undefined);
+								setItemEditorOperation('create');
+								setItemEditorModalShow(true);
+							}}
+						>
+							+ Criar Item Customizado
+						</Button>
+					</Col>
+				</Row>
+
 				<Row>
 					<Col className='text-center h5'>
 						<span className='me-2'>Capacidade:</span>
@@ -428,6 +483,11 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 										disableTrades={props.partners?.length === 0}
 										onTrade={(donation) => onTradeShow(item.Item.id, donation)}
 										npcId={props.npcId}
+										onEditBase={() => {
+											setItemEditorData(item.Item);
+											setItemEditorOperation('edit');
+											setItemEditorModalShow(true);
+										}}
 									/>
 								))}
 							</tbody>
@@ -435,6 +495,7 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 					</Col>
 				</Row>
 			</DataContainer>
+			
 			<AddDataModal
 				title='Adicionar'
 				show={addItemModalShow}
@@ -443,6 +504,20 @@ export default function PlayerItemContainer(props: PlayerItemContainerProps) {
 				onAddData={onAddItem}
 				disabled={loading}
 			/>
+			
+			{/* Novo Modal de Edição/Criação que trouxemos do Admin */}
+			<ItemEditorModal
+				show={itemEditorModalShow}
+				onHide={() => setItemEditorModalShow(false)}
+				data={itemEditorData as Item}
+				operation={itemEditorOperation}
+				onSubmit={(item) => {
+					if (itemEditorOperation === 'create') onItemCreateSubmit(item);
+					else onItemEditSubmit(item);
+				}}
+				disabled={loading}
+			/>
+
 			{props.partners && props.partners.length > 0 && (
 				<PlayerTradeModal
 					{...trade}
@@ -466,7 +541,7 @@ type PlayerCurrencyFieldProps = {
 
 function PlayerCurrencyField({ currency, npcId }: PlayerCurrencyFieldProps) {
 	const logError = useContext(ErrorLogger);
-	const [value, setValue, isClean] = useExtendedState(currency.value);
+	const[value, setValue, isClean] = useExtendedState(currency.value);
 
 	function onBlur() {
 		if (isClean()) return;
@@ -505,11 +580,12 @@ type PlayerItemFieldProps = {
 	onDelete: () => void;
 	onTrade: (donation: boolean) => void;
 	onQuantityChange: (id: number, value: number) => void;
+	onEditBase: () => void;
 	npcId?: number;
 };
 
 function PlayerItemField(props: PlayerItemFieldProps) {
-	const [currentQuantity, setCurrentQuantity, isQuantityClean] = useExtendedState(
+	const[currentQuantity, setCurrentQuantity, isQuantityClean] = useExtendedState(
 		props.quantity
 	);
 	const [currentDescription, setCurrentDescription, isDescriptionClean] =
@@ -519,7 +595,7 @@ function PlayerItemField(props: PlayerItemFieldProps) {
 	const itemID = props.item.id;
 
 	function deleteItem() {
-		if (!confirm('Você realmente deseja excluir esse item?')) return;
+		if (!confirm('Você realmente deseja excluir esse item do seu inventário?')) return;
 		setLoading(true);
 		api
 			.delete('/sheet/player/item', {
@@ -605,7 +681,18 @@ function PlayerItemField(props: PlayerItemFieldProps) {
 					</td>
 				</>
 			)}
-			<td>{props.item.name}</td>
+			<td 
+				onDoubleClick={props.onEditBase} 
+				title="Dê um duplo clique para editar o Nome ou Peso deste item."
+				style={{ 
+					cursor: 'pointer', 
+					color: '#b175ff', 
+					textDecoration: 'underline',
+					fontWeight: 'bold'
+				}}
+			>
+				{props.item.name}
+			</td>
 			<td>
 				<FormControl
 					as='textarea'

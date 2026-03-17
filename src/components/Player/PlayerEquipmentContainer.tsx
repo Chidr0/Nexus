@@ -28,6 +28,7 @@ import AddDataModal from '../Modals/AddDataModal';
 import DiceRollModal from '../Modals/DiceRollModal';
 import PlayerTradeModal from '../Modals/PlayerTradeModal';
 import type { Trade } from '../Modals/PlayerTradeModal';
+import EquipmentEditorModal from '../Modals/EquipmentEditorModal';
 
 type PlayerEquipmentContainerProps = {
 	playerEquipments: {
@@ -56,14 +57,19 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 	const [diceRollResultModalProps, onDiceRoll] = useDiceRoll(props.npcId);
 
 	const [addEquipmentShow, setAddEquipmentShow] = useState(false);
-	const [loading, setLoading] = useState(false);
+	const[loading, setLoading] = useState(false);
 	const [availableEquipments, setAvailableEquipments] = useState<
 		{ id: number; name: string }[]
 	>(props.availableEquipments);
-	const [playerEquipments, setPlayerEquipments] = useState(props.playerEquipments);
-	const [trade, setTrade] = useState<Trade<Equipment>>(tradeInitialValue);
+	const[playerEquipments, setPlayerEquipments] = useState(props.playerEquipments);
+	const[trade, setTrade] = useState<Trade<Equipment>>(tradeInitialValue);
 	const currentTradeId = useRef<number | null>(null);
 	const tradeTimeout = useRef<NodeJS.Timeout | null>(null);
+
+	// Estados do Modal de Edição/Criação
+	const[equipEditorModalShow, setEquipEditorModalShow] = useState(false);
+	const [equipEditorData, setEquipEditorData] = useState<Equipment | undefined>(undefined);
+	const [equipEditorOperation, setEquipEditorOperation] = useState<'create' | 'edit'>('create');
 
 	const socket = useContext(Socket);
 	const logError = useContext(ErrorLogger);
@@ -210,7 +216,7 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 					playerEquipments[index] = tradeRes.obj;
 				} else {
 					const eq = playerEquipments.splice(index, 1)[0];
-					setAvailableEquipments((e) => [...e, eq.Equipment]);
+					setAvailableEquipments((e) =>[...e, eq.Equipment]);
 				}
 
 				setPlayerEquipments([...playerEquipments]);
@@ -248,7 +254,36 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 			socket.off('playerTradeResponse');
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	},[]);
+
+	// Lógica de Criar Equipamento
+	function onEquipCreateSubmit(equip: Equipment) {
+		setLoading(true);
+		api
+			.put('/sheet/equipment', equip)
+			.then((res) => {
+				return api.put('/sheet/player/equipment', { id: res.data.id, npcId: props.npcId });
+			})
+			.then((res) => {
+				const newEquip = res.data.equipment;
+				setPlayerEquipments([...playerEquipments, newEquip]);
+				setEquipEditorModalShow(false);
+			})
+			.catch(logError)
+			.finally(() => setLoading(false));
+	}
+
+	// Lógica de Editar Equipamento (Duplo clique)
+	function onEquipEditSubmit(equip: Equipment) {
+		setLoading(true);
+		api
+			.post('/sheet/equipment', equip)
+			.catch(logError)
+			.finally(() => {
+				setLoading(false);
+				setEquipEditorModalShow(false);
+			});
+	}
 
 	function onAddEquipment(id: number) {
 		setLoading(true);
@@ -273,7 +308,7 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 	}
 
 	function onDeleteEquipment(id: number) {
-		const newPlayerEquipments = [...playerEquipments];
+		const newPlayerEquipments =[...playerEquipments];
 		const index = newPlayerEquipments.findIndex((eq) => eq.Equipment.id === id);
 
 		if (index === -1) return;
@@ -358,6 +393,24 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 				outline
 				title={props.title}
 				addButton={{ onAdd: () => setAddEquipmentShow(true), disabled: loading }}>
+				
+				<Row className='mb-3 justify-content-center'>
+					<Col xs='auto'>
+						<Button 
+							size='sm' 
+							variant='secondary' 
+							style={{ backgroundColor: '#6f42c1', borderColor: '#6f42c1' }}
+							onClick={() => {
+								setEquipEditorData(undefined);
+								setEquipEditorOperation('create');
+								setEquipEditorModalShow(true);
+							}}
+						>
+							+ Criar Equipamento Customizado
+						</Button>
+					</Col>
+				</Row>
+
 				<Row className='text-center'>
 					<Col>
 						<Table responsive className='align-middle'>
@@ -391,6 +444,11 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 										showDiceRollResult={onDiceRoll}
 										disableTrades={props.partners?.length === 0}
 										npcId={props.npcId}
+										onEditBase={() => {
+											setEquipEditorData(eq.Equipment);
+											setEquipEditorOperation('edit');
+											setEquipEditorModalShow(true);
+										}}
 									/>
 								))}
 							</tbody>
@@ -404,6 +462,17 @@ export default function PlayerEquipmentContainer(props: PlayerEquipmentContainer
 				onHide={() => setAddEquipmentShow(false)}
 				data={availableEquipments}
 				onAddData={onAddEquipment}
+				disabled={loading}
+			/>
+			<EquipmentEditorModal
+				show={equipEditorModalShow}
+				onHide={() => setEquipEditorModalShow(false)}
+				data={equipEditorData as Equipment}
+				operation={equipEditorOperation}
+				onSubmit={(equip) => {
+					if (equipEditorOperation === 'create') onEquipCreateSubmit(equip);
+					else onEquipEditSubmit(equip);
+				}}
 				disabled={loading}
 			/>
 			{props.partners && props.partners.length > 0 && (
@@ -435,6 +504,7 @@ type PlayerEquipmentFieldProps = {
 	onDelete: () => void;
 	onTrade: (donation: boolean) => void;
 	showDiceRollResult: DiceRollEvent;
+	onEditBase: () => void;
 	npcId?: number;
 };
 
@@ -550,14 +620,25 @@ function PlayerEquipmentField(props: PlayerEquipmentFieldProps) {
 					</td>
 				</>
 			)}
-			<td>{props.equipment.name}</td>
+			<td
+				onDoubleClick={props.onEditBase}
+				title="Dê um duplo clique para editar este equipamento."
+				style={{ 
+					cursor: 'pointer', 
+					color: '#b175ff', 
+					textDecoration: 'underline',
+					fontWeight: 'bold'
+				}}
+			>
+				{props.equipment.name}
+			</td>
 			<td>{props.equipment.type}</td>
 			<td>{props.equipment.damage}</td>
 			<td>
 				{props.equipment.damage !== '-' && (
 					<Image
 						alt='Dado'
-						src='/dice20.webp'
+						src='/dice20.png'
 						className='clickable'
 						onClick={diceRoll}
 						style={{ maxHeight: '2rem' }}

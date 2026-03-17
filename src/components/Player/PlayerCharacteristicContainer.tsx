@@ -146,7 +146,7 @@ function PlayerCharacteristicField(props: PlayerCharacteristicFieldProps) {
 						fluid
 						alt='Dado'
 						className='clickable'
-						src='/dice20.webp'
+						src='/dice20.png'
 						onClick={(ev) => rollDice(ev.ctrlKey)}
 						style={{ maxHeight: 50 }}
 					/>

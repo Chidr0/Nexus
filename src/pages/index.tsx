@@ -57,7 +57,7 @@ export default function Page({ init, error }: InferSSRProps<typeof getSSP>) {
 }
 
 function HomePage() {
-	const [loading, setLoading] = useState(false);
+	const[loading, setLoading] = useState(false);
 	const [toasts, addToast] = useToast();
 
 	async function onFormSubmit(username: string, password: string) {
@@ -77,34 +77,46 @@ function HomePage() {
 
 	if (loading)
 		return (
-			<Container className='text-center'>
-				<Row className='align-items-center' style={{ height: '90vh' }}>
-					<Col>
-						<Spinner animation='border' variant='secondary' />
-					</Col>
-				</Row>
+			<Container className='text-center d-flex align-items-center justify-content-center' style={{ height: '100vh' }}>
+				<Spinner animation='border' style={{ color: '#8a2be2' }} />
 			</Container>
 		);
 
 	return (
 		<>
-			<Container className='text-center mt-2'>
-				<Row>
-					<Col>
-						<h1>
-							<label htmlFor='username'>Login</label>
-						</h1>
-					</Col>
-				</Row>
-				<LoginForm onSubmit={onFormSubmit} />
-				<Row>
-					<Col>
-						<span className='me-2'>Não possui cadastro?</span>
-						<Link href='/register' passHref>
-							<a className={styles.link}>Cadastrar-se</a>
-						</Link>
-					</Col>
-				</Row>
+			{/* Envolve o login numa tela cheia e centraliza verticalmente */}
+			<Container className='d-flex align-items-center justify-content-center' style={{ minHeight: '80vh' }}>
+				{/* Caixa principal do Login (O "Card" Roxo escuro) */}
+				<div
+					style={{
+						backgroundColor: '#150d22',
+						padding: '40px',
+						borderRadius: '15px',
+						border: '1px solid #3b2259',
+						boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.7)',
+						width: '100%',
+						maxWidth: '450px',
+					}}
+				>
+					<Row className='text-center mb-4'>
+						<Col>
+							<h1 style={{ color: '#c4a7e7', fontWeight: 'bold', textShadow: '0 0 10px rgba(138, 43, 226, 0.3)' }}>
+								<label htmlFor='username'>Bem-Vindo ao Nexus RPG</label>
+							</h1>
+						</Col>
+					</Row>
+					
+					<LoginForm onSubmit={onFormSubmit} />
+					
+					<Row className='text-center mt-4'>
+						<Col>
+							<span className='me-2' style={{ color: '#9d8db3' }}>Não possui cadastro?</span>
+							<Link href='/register' passHref>
+								<a className={styles.link} style={{ color: '#b175ff', fontWeight: 'bold' }}>Cadastrar-se</a>
+							</Link>
+						</Col>
+					</Row>
+				</div>
 			</Container>
 			<ErrorToastContainer toasts={toasts} />
 		</>
@@ -122,20 +134,27 @@ function LoginForm(props: { onSubmit: (username: string, password: string) => vo
 				setPassword('');
 				props.onSubmit(username, password);
 			}}>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-3 justify-content-center'>
+				<Col>
 					<FormControl
 						className='text-center theme-element'
-						placeholder='Login'
+						placeholder='Nome de Usuário'
 						id='username'
 						name='username'
 						value={username}
 						onChange={(e) => setUsername(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710', // Fundo mais escuro para o input destacar
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-4 justify-content-center'>
+				<Col>
 					<FormControl
 						type='password'
 						className='text-center theme-element'
@@ -144,13 +163,31 @@ function LoginForm(props: { onSubmit: (username: string, password: string) => vo
 						name='password'
 						value={password}
 						onChange={(e) => setPassword(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
-					<Button type='submit' variant='secondary'>
-						Entrar
+			<Row className='justify-content-center'>
+				<Col>
+					<Button 
+						type='submit' 
+						className='w-100'
+						style={{
+							backgroundColor: '#8a2be2',
+							borderColor: '#8a2be2',
+							fontWeight: 'bold',
+							padding: '10px',
+							borderRadius: '8px',
+							boxShadow: '0 4px 15px rgba(138, 43, 226, 0.4)'
+						}}
+					>
+						ENTRAR NO SISTEMA
 					</Button>
 				</Col>
 			</Row>

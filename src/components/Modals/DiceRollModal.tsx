@@ -24,7 +24,7 @@ export type DiceRollModalProps = DiceRoll & {
 };
 
 export default function DiceRollModal(props: DiceRollModalProps) {
-	const [dices, setDices] = useState(props.dices);
+	const[dices, setDices] = useState(props.dices);
 	const [num, setNum] = useState(1);
 	const [diceRoll, setDiceRoll] = useState<DiceRollResult>({ dices: null });
 	const lastRoll = useRef<DiceRollResult>({ dices: null });
@@ -51,7 +51,7 @@ export default function DiceRollModal(props: DiceRollModalProps) {
 		}
 		setDices(props.dices);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [props.dices]);
+	},[props.dices]);
 
 	function onNumChange(coeff: number) {
 		setNum((n) => {
@@ -152,11 +152,26 @@ type DisplayDice = {
 function DiceRollResultModal(props: DiceRollResultModalProps) {
 	const [diceResults, setDiceResults] = useState<DiceResponse[]>([]);
 	const [descriptionFade, setDescriptionFade] = useState(false);
+	
+	// Estado para a Cor do Dado (Padrão: Nosso roxo neon)
+	const [diceColor, setDiceColor] = useState('#8a2be2');
 
 	const logError = useContext(ErrorLogger);
 
 	const rollAgain = useRef(false);
 	const descriptionDelayTimeout = useRef<NodeJS.Timeout | null>(null);
+
+	// Carrega a cor salva no PC do jogador assim que o modal abre
+	useEffect(() => {
+		const savedColor = localStorage.getItem('playerDiceColor');
+		if (savedColor) setDiceColor(savedColor);
+	},[]);
+
+	// Salva a nova cor sempre que o jogador mudar
+	function handleColorChange(color: string) {
+		setDiceColor(color);
+		localStorage.setItem('playerDiceColor', color);
+	}
 
 	const result: DisplayDice | undefined = useMemo(() => {
 		if (diceResults.length === 1)
@@ -267,25 +282,57 @@ function DiceRollResultModal(props: DiceRollResultModalProps) {
 				disabled: !result,
 			}}
 			bodyStyle={{ minHeight: 120, display: 'flex', alignItems: 'center' }}>
+			
+			{/* Seletor de Cor do Dado - No canto superior direito do modal */}
+			<div style={{ position: 'absolute', top: '15px', right: '50px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+				<label style={{ fontSize: '0.8rem', color: '#9d8db3' }}>Cor do Dado:</label>
+				<input 
+					type="color" 
+					value={diceColor} 
+					onChange={(e) => handleColorChange(e.target.value)}
+					style={{ 
+						border: 'none', 
+						width: '25px', 
+						height: '25px', 
+						cursor: 'pointer', 
+						backgroundColor: 'transparent',
+						borderRadius: '4px'
+					}}
+				/>
+			</div>
+
 			<Container fluid className='text-center'>
 				{!result && (
 					<Row>
 						<Col>
-							<Spinner animation='border' variant='secondary' />
+							<Spinner animation='border' style={{ color: diceColor }} />
 						</Col>
 					</Row>
 				)}
 				<Row>
 					{result && (
 						<Fade in appear>
-							<Col className='h1 m-0'>{result.roll}</Col>
+							<Col 
+								className='h1 m-0' 
+								style={{ 
+									color: 'white', 
+									fontWeight: 'bold',
+									fontSize: '4rem',
+									// Efeito Neon na Cor Escolhida
+									textShadow: `0 0 10px ${diceColor}, 0 0 20px ${diceColor}` 
+								}}
+							>
+								{result.roll}
+							</Col>
 						</Fade>
 					)}
 				</Row>
-				<Row>
+				<Row className="mt-2">
 					{result && (
 						<Fade in={descriptionFade}>
-							<Col>{result.description}</Col>
+							<Col style={{ color: '#c4a7e7', fontSize: '1.2rem' }}>
+								{result.description}
+							</Col>
 						</Fade>
 					)}
 				</Row>

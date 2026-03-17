@@ -1,11 +1,10 @@
 import type { ChangeEvent } from 'react';
-import { useContext, useState } from 'react';
+import { useCallback, useContext, useState } from 'react';
 import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
-import FormControl from 'react-bootstrap/FormControl';
-import FormGroup from 'react-bootstrap/FormGroup';
 import FormLabel from 'react-bootstrap/FormLabel';
 import Row from 'react-bootstrap/Row';
+import { useDropzone } from 'react-dropzone';
 import { ErrorLogger } from '../../contexts';
 import api from '../../utils/api';
 import SheetModal from './SheetModal';
@@ -50,6 +49,20 @@ export default function PlayerAvatarModal(props: PlayerAvatarModalProps) {
 	const [loading, setLoading] = useState(false);
 	const logError = useContext(ErrorLogger);
 
+	// Lógica para converter arquivo para Base64
+	const onDrop = useCallback((acceptedFiles: File[], id: number | null) => {
+		const file = acceptedFiles[0];
+		if (!file) return;
+		
+		const reader = new FileReader();
+		reader.onload = () => {
+			setAvatars((prev) =>
+				prev.map((a) => (a.id === id ? { ...a, link: reader.result as string } : a))
+			);
+		};
+		reader.readAsDataURL(file);
+	}, []);
+
 	function onUpdateAvatar() {
 		setLoading(true);
 		api
@@ -62,18 +75,6 @@ export default function PlayerAvatarModal(props: PlayerAvatarModalProps) {
 			});
 	}
 
-	function onAvatarChange(
-		id: number | null,
-		ev: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-	) {
-		setAvatars((avatars) => {
-			const newAvatars = [...avatars];
-			const av = newAvatars.find((avatar) => avatar.id === id);
-			if (av) av.link = ev.target.value || null;
-			return newAvatars;
-		});
-	}
-
 	return (
 		<SheetModal
 			title='Editar Avatar'
@@ -84,25 +85,61 @@ export default function PlayerAvatarModal(props: PlayerAvatarModalProps) {
 			<Container fluid>
 				<Row className='mb-3 h4 text-center'>
 					<Col>
-						Caso vá usar a extensão do OBS, é recomendado que as imagens estejam no
-						tamanho de <b>420x600</b> (ou no aspecto de 7:10) e em formato <b>PNG</b>.
+						Arraste uma imagem ou clique para selecionar. <b>PNG recomendado</b>.
 					</Col>
 				</Row>
 				{avatars.map((avatar) => (
-					<FormGroup
-						className='mb-3'
-						controlId={`editAvatar${avatar.id}`}
-						key={avatar.id}>
-						<FormLabel>Avatar ({avatar.name})</FormLabel>
-						<FormControl
-							className='theme-element'
-							value={avatar.link || ''}
-							onChange={(ev) => onAvatarChange(avatar.id, ev)}
-							disabled={loading}
-						/>
-					</FormGroup>
+					<AvatarDropzone 
+						key={avatar.id ?? 'default'} 
+						avatar={avatar} 
+						onDrop={onDrop} 
+					/>
 				))}
 			</Container>
 		</SheetModal>
+	);
+}
+
+// Componente auxiliar para o Dropzone
+function AvatarDropzone({ avatar, onDrop }: { avatar: AvatarData; onDrop: (files: File[], id: number | null) => void }) {
+	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+		onDrop: (files) => onDrop(files, avatar.id),
+		accept: { 'image/*': [] },
+		multiple: false
+	});
+
+	return (
+		<div className='mb-4'>
+			<FormLabel>Avatar ({avatar.name})</FormLabel>
+			<div
+				{...getRootProps()}
+				style={{
+					border: isDragActive ? '2px dashed #0d6efd' : '2px dashed #444',
+					padding: '15px',
+					textAlign: 'center',
+					cursor: 'pointer',
+					borderRadius: '10px',
+					backgroundColor: '#212529'
+				}}>
+				<input {...getInputProps()} />
+				{avatar.link ? (
+					<img
+						src={avatar.link}
+						alt={avatar.name}
+						style={{
+							width: '100px',
+							height: '100px',
+							borderRadius: '50%',
+							objectFit: 'cover',
+							border: '2px solid #fff'
+						}}
+					/>
+				) : (
+					<div style={{ padding: '20px', color: '#aaa' }}>
+						Clique ou arraste aqui
+					</div>
+				)}
+			</div>
+		</div>
 	);
 }

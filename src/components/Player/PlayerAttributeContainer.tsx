@@ -302,7 +302,7 @@ function PlayerAttributeField(props: PlayerAttributeFieldProps) {
 					{props.playerAttribute.Attribute.rollable && (
 						<Col xs='auto' style={{ paddingLeft: 0 }}>
 							<Image
-								src='/dice20.webp'
+								src='/dice20.png'
 								alt='Dado'
 								className='attribute-dice clickable'
 								onClick={(ev) => diceClick(ev.ctrlKey)}
@@ -402,7 +402,6 @@ function PlayerAvatarImage(props: PlayerAvatarImageProps) {
 			.get(`/sheet/player/avatar/${statusID}`, { params: { playerID: props.npcId } })
 			.then((res) => setSrc(res.data.link))
 			.catch(() => setSrc('/avatar404.png'));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [props.rerender]);
 
 	useEffect(() => {
@@ -412,21 +411,35 @@ function PlayerAvatarImage(props: PlayerAvatarImageProps) {
 			.get(`/sheet/player/avatar/${statusID}`, { params: { playerID: props.npcId } })
 			.then((res) => setSrc(res.data.link))
 			.catch(() => setSrc('/avatar404.png'));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [props.statusID]);
 
 	return (
 		<>
 			<Col xl={{ offset: 2 }} className='text-center'>
-				<Image
-					fluid
-					src={src}
-					alt='Avatar'
+				<div 
 					className='clickable'
-					style={{ maxHeight: MAX_AVATAR_HEIGHT }}
-					onError={() => setSrc('/avatar404.png')}
 					onClick={() => setAvatarModalShow(true)}
-				/>
+					style={{
+						width: '300px',
+						height: '300px',
+						margin: '0 auto',
+						borderRadius: '50%',
+						overflow: 'hidden',
+						border: '4px solid #8a2be2', // Roxo (BlueViolet)
+						boxShadow: '0 0 20px rgba(138, 43, 226, 0.4)' // Brilho neon roxo em volta
+					}}
+				>
+					<img
+						src={src}
+						alt='Avatar'
+						onError={() => setSrc('/avatar404.png')}
+						style={{ 
+							width: '100%', 
+							height: '100%', 
+							objectFit: 'cover' // A mágica que impede a deformação
+						}}
+					/>
+				</div>
 			</Col>
 			<PlayerAvatarModal
 				playerAvatars={props.playerAvatars}

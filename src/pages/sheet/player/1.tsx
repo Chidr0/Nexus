@@ -1,3 +1,5 @@
+//Antes Deus e eu sabíamos o que fiz, hoje só ele sabe(NÃO OUSE MEXER NESSE CODIGO...)
+
 import type { GetServerSidePropsContext } from 'next';
 import Router from 'next/router';
 import { useEffect } from 'react';
@@ -5,6 +7,7 @@ import Col from 'react-bootstrap/Col';
 import Container from 'react-bootstrap/Container';
 import Row from 'react-bootstrap/Row';
 import Spinner from 'react-bootstrap/Spinner';
+import Button from 'react-bootstrap/Button';
 import ApplicationHead from '../../../components/ApplicationHead';
 import DataContainer from '../../../components/DataContainer';
 import ErrorToastContainer from '../../../components/ErrorToastContainer';
@@ -37,6 +40,16 @@ export default function Page(props: PageProps) {
 }
 
 function PlayerSheet(props: PageProps) {
+	if (!props || !props.player) {
+		return (
+			<Container className='text-center mt-5'>
+				<h2 style={{ color: '#8a2be2' }}>Ficha Não Encontrada.</h2>
+				<p>Houve um erro de sincronização com o banco de dados.</p>
+				<Button variant="secondary" onClick={() => Router.push('/')}>Voltar ao Início</Button>
+			</Container>
+		);
+	}
+
 	const [toasts, addToast] = useToast();
 	const socket = useSocket(`player${props.player.id}`);
 
@@ -53,7 +66,7 @@ function PlayerSheet(props: PageProps) {
 			<Container className='text-center'>
 				<Row className='align-items-center' style={{ height: '90vh' }}>
 					<Col>
-						<Spinner animation='border' variant='secondary' />
+						<Spinner animation='border' style={{ color: '#8a2be2' }} />
 					</Col>
 				</Row>
 			</Container>
@@ -165,20 +178,29 @@ function PlayerSheet(props: PageProps) {
 }
 
 async function getSSP(ctx: GetServerSidePropsContext) {
-	const player = ctx.req.session.player;
+	const playerSession = ctx.req.session.player;
 
-	if (!player) {
-		return {
-			redirect: {
-				destination: '/',
-				permanent: false,
-			},
-		};
+	if (!playerSession) {
+		return { redirect: { destination: '/', permanent: false } };
 	}
+
+	let targetId = playerSession.id;
+
+	if (playerSession.admin && ctx.query.playerId) {
+		const parsedId = parseInt(ctx.query.playerId as string);
+		if (!isNaN(parsedId)) {
+			targetId = parsedId;
+		}
+	}
+
+	console.log('=== DEBUG DA FICHA ===');
+	console.log('Sessão:', playerSession);
+	console.log('URL da Query:', ctx.query);
+	console.log('ID que vai pro banco:', targetId);
 
 	const results = await prisma.$transaction([
 		prisma.player.findUnique({
-			where: { id: player.id },
+			where: { id: targetId },
 			select: {
 				id: true,
 				name: true,
@@ -216,10 +238,10 @@ async function getSSP(ctx: GetServerSidePropsContext) {
 			},
 		}),
 		prisma.equipment.findMany({
-			where: { visible: true, PlayerEquipment: { none: { player_id: player.id } } },
+			where: { visible: true, PlayerEquipment: { none: { player_id: targetId } } },
 		}),
 		prisma.skill.findMany({
-			where: { PlayerSkill: { none: { player_id: player.id } } },
+			where: { PlayerSkill: { none: { player_id: targetId } } },
 			select: {
 				id: true,
 				name: true,
@@ -231,17 +253,17 @@ async function getSSP(ctx: GetServerSidePropsContext) {
 			},
 		}),
 		prisma.item.findMany({
-			where: { visible: true, PlayerItem: { none: { player_id: player.id } } },
+			where: { visible: true, PlayerItem: { none: { player_id: targetId } } },
 		}),
 		prisma.spell.findMany({
-			where: { visible: true, PlayerSpell: { none: { player_id: player.id } } },
+			where: { visible: true, PlayerSpell: { none: { player_id: targetId } } },
 		}),
 		prisma.config.findUnique({ where: { name: 'dice' } }),
 		prisma.config.findUnique({ where: { name: 'enable_automatic_markers' } }),
 		prisma.player.findMany({
 			where: {
 				role: { in: ['PLAYER'] },
-				id: { not: player.id },
+				id: { not: targetId },
 			},
 			select: {
 				id: true,
@@ -251,7 +273,10 @@ async function getSSP(ctx: GetServerSidePropsContext) {
 	]);
 
 	if (!results[0]) {
-		ctx.req.session.destroy();
+		console.log('JOGADOR NÃO ENCONTRADO! Destruindo a sessão se não for mestre...');
+		if (!playerSession.admin) {
+			ctx.req.session.destroy();
+		}
 		return {
 			redirect: {
 				destination: '/',
@@ -273,4 +298,5 @@ async function getSSP(ctx: GetServerSidePropsContext) {
 		},
 	};
 }
+
 export const getServerSideProps = sessionSSR(getSSP);

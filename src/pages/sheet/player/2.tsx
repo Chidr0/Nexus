@@ -7,6 +7,7 @@ import FormGroup from 'react-bootstrap/FormGroup';
 import FormLabel from 'react-bootstrap/FormLabel';
 import Row from 'react-bootstrap/Row';
 import Spinner from 'react-bootstrap/Spinner';
+import Button from 'react-bootstrap/Button';
 import ApplicationHead from '../../../components/ApplicationHead';
 import DataContainer from '../../../components/DataContainer';
 import ErrorToastContainer from '../../../components/ErrorToastContainer';
@@ -31,6 +32,17 @@ export default function Page(props: PageProps) {
 }
 
 function PlayerSheet(props: PageProps) {
+	// BLINDAGEM: Se não achar o jogador, mostra tela amigável e não quebra o site
+	if (!props || !props.player) {
+		return (
+			<Container className='text-center mt-5'>
+				<h2 style={{ color: '#8a2be2' }}>Ficha Não Encontrada.</h2>
+				<p>Não foi possível carregar os dados deste jogador.</p>
+				<Button variant="secondary" onClick={() => Router.push('/')}>Voltar ao Início</Button>
+			</Container>
+		);
+	}
+
 	const [toasts, addToast] = useToast();
 	const socket = useSocket(`player${props.player.id}`);
 
@@ -47,7 +59,7 @@ function PlayerSheet(props: PageProps) {
 			<Container className='text-center'>
 				<Row className='align-items-center' style={{ height: '90vh' }}>
 					<Col>
-						<Spinner animation='border' variant='secondary' />
+						<Spinner animation='border' style={{ color: '#8a2be2' }} />
 					</Col>
 				</Row>
 			</Container>
@@ -61,7 +73,8 @@ function PlayerSheet(props: PageProps) {
 				</Row>
 				<Row>
 					<DataContainer title='Anotações' htmlFor='playerAnnotations' outline>
-						<PlayerAnnotationsField value={props.player.PlayerNote[0].value} />
+						{/* Proteção extra caso o jogador não tenha anotações ainda */}
+						<PlayerAnnotationsField value={props.player.PlayerNote[0]?.value || ''} />
 					</DataContainer>
 				</Row>
 				<Row>
@@ -71,7 +84,7 @@ function PlayerSheet(props: PageProps) {
 								<Col>
 									<FormGroup controlId={`extraInfo${extraInfo.ExtraInfo.id}`}>
 										<Row>
-											<Col className='h4' style={{ margin: 0 }}>
+											<Col className='h4' style={{ margin: 0, color: '#c4a7e7' }}>
 												<FormLabel>{extraInfo.ExtraInfo.name}</FormLabel>
 											</Col>
 										</Row>
@@ -100,16 +113,21 @@ async function getSSP(ctx: GetServerSidePropsContext) {
 	const playerSession = ctx.req.session.player;
 
 	if (!playerSession) {
-		return {
-			redirect: {
-				destination: '/',
-				permanent: false,
-			},
-		};
+		return { redirect: { destination: '/', permanent: false } };
+	}
+
+	let targetId = playerSession.id;
+
+	// Se for mestre, pega o ID da URL (?playerId=X)
+	if (playerSession.admin && ctx.query.playerId) {
+		const parsedId = parseInt(ctx.query.playerId as string);
+		if (!isNaN(parsedId)) {
+			targetId = parsedId;
+		}
 	}
 
 	const player = await prisma.player.findUnique({
-		where: { id: playerSession.id },
+		where: { id: targetId },
 		select: {
 			id: true,
 			PlayerNote: { select: { value: true } },
@@ -118,7 +136,10 @@ async function getSSP(ctx: GetServerSidePropsContext) {
 	});
 
 	if (!player) {
-		ctx.req.session.destroy();
+		// Se não for admin e não achar a ficha, destrói a sessão
+		if (!playerSession.admin) {
+			ctx.req.session.destroy();
+		}
 		return {
 			redirect: {
 				destination: '/',

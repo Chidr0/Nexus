@@ -46,47 +46,53 @@ export default function Register() {
 
 	if (loading)
 		return (
-			<Container className='text-center'>
-				<Row className='align-items-center' style={{ height: '90vh' }}>
-					<Col>
-						<Spinner animation='border' variant='secondary' />
-					</Col>
-				</Row>
+			<Container className='text-center d-flex align-items-center justify-content-center' style={{ height: '100vh' }}>
+				<Spinner animation='border' style={{ color: '#8a2be2' }} />
 			</Container>
 		);
 
 	return (
 		<>
 			<ApplicationHead title='Cadastro de Jogador' />
-			<Container className='text-center mt-2'>
-				<Row>
-					<Col>
-						<h1>
-							<label htmlFor='username'>Cadastro de Jogador</label>
-						</h1>
-					</Col>
-				</Row>
-				<RegisterForm onSubmit={onFormSubmit} />
-				<Row>
-					<Col>
-						<Row className='my-3'>
-							<Col>
-								Já possui cadastro?{' '}
-								<Link href='/'>
-									<a className={homeStyles.link}>Entrar</a>
+			<Container className='d-flex align-items-center justify-content-center' style={{ minHeight: '80vh', marginTop: '2rem', marginBottom: '2rem' }}>
+				<div
+					style={{
+						backgroundColor: '#150d22',
+						padding: '40px',
+						borderRadius: '15px',
+						border: '1px solid #3b2259',
+						boxShadow: '0px 10px 30px rgba(0, 0, 0, 0.7)',
+						width: '100%',
+						maxWidth: '450px',
+					}}
+				>
+					<Row className='text-center mb-4'>
+						<Col>
+							<h1 style={{ color: '#c4a7e7', fontWeight: 'bold', textShadow: '0 0 10px rgba(138, 43, 226, 0.3)' }}>
+								<label htmlFor='username'>Novo Jogador</label>
+							</h1>
+						</Col>
+					</Row>
+					
+					<RegisterForm onSubmit={onFormSubmit} />
+					
+					<Row className='text-center mt-4'>
+						<Col>
+							<div className='mb-2'>
+								<span className='me-2' style={{ color: '#9d8db3' }}>Já possui cadastro?</span>
+								<Link href='/' passHref>
+									<a className={homeStyles.link} style={{ color: '#b175ff', fontWeight: 'bold' }}>Entrar</a>
 								</Link>
-							</Col>
-						</Row>
-						<Row className='my-3'>
-							<Col>
-								É o mestre?{' '}
-								<Link href='/register/admin'>
-									<a className={homeStyles.link}>Cadastrar-se como mestre</a>
+							</div>
+							<div>
+								<span className='me-2' style={{ color: '#5c4d75', fontSize: '0.85rem' }}>É o mestre?</span>
+								<Link href='/register/admin' passHref>
+									<a className={homeStyles.link} style={{ color: '#8a2be2', fontSize: '0.85rem' }}>Cadastrar-se como mestre</a>
 								</Link>
-							</Col>
-						</Row>
-					</Col>
-				</Row>
+							</div>
+						</Col>
+					</Row>
+				</div>
 			</Container>
 			<ErrorToastContainer toasts={toasts} />
 		</>
@@ -97,7 +103,7 @@ function RegisterForm(props: {
 	onSubmit: (username: string, password: string, confirmPassword: string) => void;
 }) {
 	const [username, setUsername] = useState('');
-	const [password, setPassword] = useState('');
+	const[password, setPassword] = useState('');
 	const [confirmPassword, setConfirmPassword] = useState('');
 
 	return (
@@ -108,20 +114,27 @@ function RegisterForm(props: {
 				setConfirmPassword('');
 				props.onSubmit(username, password, confirmPassword);
 			}}>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-3 justify-content-center'>
+				<Col>
 					<FormControl
 						className='text-center theme-element'
-						placeholder='Login'
+						placeholder='Nome de Usuário'
 						id='username'
 						name='username'
 						value={username}
 						onChange={(e) => setUsername(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-3 justify-content-center'>
+				<Col>
 					<FormControl
 						type='password'
 						className='text-center theme-element'
@@ -130,11 +143,18 @@ function RegisterForm(props: {
 						name='password'
 						value={password}
 						onChange={(e) => setPassword(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
+			<Row className='mb-4 justify-content-center'>
+				<Col>
 					<FormControl
 						type='password'
 						className='text-center theme-element'
@@ -143,13 +163,31 @@ function RegisterForm(props: {
 						name='confirmPassword'
 						value={confirmPassword}
 						onChange={(e) => setConfirmPassword(e.currentTarget.value)}
+						style={{
+							backgroundColor: '#0b0710',
+							borderColor: '#3b2259',
+							color: '#fff',
+							padding: '12px',
+							borderRadius: '8px'
+						}}
 					/>
 				</Col>
 			</Row>
-			<Row className='my-3 justify-content-center'>
-				<Col md={6}>
-					<Button type='submit' variant='secondary'>
-						Cadastrar-se
+			<Row className='justify-content-center'>
+				<Col>
+					<Button 
+						type='submit' 
+						className='w-100'
+						style={{
+							backgroundColor: '#8a2be2',
+							borderColor: '#8a2be2',
+							fontWeight: 'bold',
+							padding: '10px',
+							borderRadius: '8px',
+							boxShadow: '0 4px 15px rgba(138, 43, 226, 0.4)'
+						}}
+					>
+						CRIAR CONTA
 					</Button>
 				</Col>
 			</Row>

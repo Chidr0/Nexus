@@ -3,14 +3,17 @@
     color: inherit !important;
     border-width: 0px 0px 1px 0px;
     border-style: solid;
-    border-color: #ff000070;
+    border-color: rgba(138, 43, 226, 0.5); /* Linha roxa */
+    
     &:hover,
     &:active {
         padding: 5px;
         border-width: 0;
         border-radius: 5px;
-        background-color: #ff000070;
+        background-color: rgba(138, 43, 226, 0.3); /* Fundo roxo suave ao passar o mouse */
+        box-shadow: 0 0 15px rgba(138, 43, 226, 0.2); /* Brilhozinho */
     }
-    transition-property: padding, border;
+    
+    transition-property: padding, border, background-color, box-shadow;
     transition-duration: 250ms;
 }

@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Col from 'react-bootstrap/Col';
-import Image from 'react-bootstrap/Image';
+import Image from 'react-bootstrap/Image'; // Mantive o import original
 import api from '../../utils/api';
-
-const style = { maxHeight: 250 };
 
 type AvatarFieldProps = {
 	status: { id: number; value: boolean }[];
@@ -22,24 +20,37 @@ export default function AvatarField({ status, playerId }: AvatarFieldProps) {
 				break;
 			}
 		}
+		
 		if (statusID === previousStatusID.current) return;
 		previousStatusID.current = statusID;
+		
 		api
 			.get(`/sheet/player/avatar/${statusID}?playerID=${playerId}`)
-			.then((res) => setSrc(res.data.link))
-			.catch((err) => setSrc('/avatar404.png'));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [status]);
+			.then((res) => setSrc(res.data.link || '/avatar404.png'))
+			.catch(() => setSrc('/avatar404.png'));
+	}, [status, playerId]);
 
 	return (
 		<Col>
-			<Image
-				fluid
-				src={src}
-				alt='Avatar'
-				style={style}
-				onError={() => setSrc('/avatar404.png')}
-			/>
+			<div style={{ 
+				width: '250px', 
+				height: '250px', 
+				margin: '0 auto', 
+				overflow: 'hidden', 
+				borderRadius: '50%', // Forma circular
+				border: '3px solid #444' // Moldura opcional
+			}}>
+				<img
+					src={src}
+					alt='Avatar'
+					onError={() => setSrc('/avatar404.png')}
+					style={{ 
+						width: '100%', 
+						height: '100%', 
+						objectFit: 'cover' // Isso impede que a imagem fique esticada/feia
+					}}
+				/>
+			</div>
 		</Col>
 	);
 }

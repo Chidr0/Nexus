@@ -1,36 +1,31 @@
-$primary: #0d6efd;
-$secondary: #6c757d;
+/* Define a cor principal do site (Botões, Checkboxes, Switches) */
+$primary: #8a2be2; /* Roxo Neon (BlueViolet) */
+$secondary: #6c5b7b; /* Cinza puxado pro roxo */
+
 @import 'bootstrap';
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500&display=swap');
 
 @mixin theme-components($dark-theme) {
-	$background-color: #ffffff;
-	$text-color: #000000;
-	$skill-container-outline-color: #111111;
-	$player-container-background-color: #cecece;
+	$background-color: #f4ebff;
+	$text-color: #1a1025;
+	$skill-container-outline-color: #8a2be2;
+	$player-container-background-color: #e8d8fa;
 
 	@if $dark-theme {
-		$background-color: #111111;
-		$text-color: #ffffff;
-		$skill-container-outline-color: #ffffff;
-		$player-container-background-color: #252525;
+		/* A magia do tema escuro acontece aqui */
+		$background-color: #130a1c; /* Fundo roxo super escuro (quase preto) */
+		$text-color: #eaddff; /* Texto branco levemente lilás para não cansar a vista */
+		$skill-container-outline-color: #b175ff; /* Borda ao passar o mouse */
+		$player-container-background-color: #1e122b; /* Fundo das caixas da ficha */
 	}
 
 	background-color: $background-color;
 	color: $text-color;
 
-	// .btn-primary {
-	// 	@include button-variant($background-color, $background-color);
-	// }
-	//
-	// .btn-secondary {
-	// 	@include button-variant($background-color, $background-color);
-	// }
-
 	.table {
 		color: $text-color;
 		tr {
-			border-color: gray;
+			border-color: rgba($primary, 0.3); /* Linhas da tabela com tom roxo */
 		}
 	}
 
@@ -41,10 +36,12 @@ $secondary: #6c757d;
 	.skill-container {
 		background-color: $background-color;
 		border-radius: 20px;
+		transition: all 0.2s ease-in-out;
 
 		&:hover {
 			background-color: $skill-container-outline-color;
 			color: invert($text-color);
+			box-shadow: 0 0 10px rgba($primary, 0.4);
 
 			input {
 				background-color: inherit;
@@ -70,13 +67,15 @@ $secondary: #6c757d;
 	.modal-content {
 		background-color: $background-color;
 		color: $text-color;
+		border: 1px solid rgba($primary, 0.3);
+		box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
 	}
 
 	.modal-header,
 	.modal-body,
 	.modal-footer {
 		@if $dark-theme {
-			border-color: lighten($background-color, 20%);
+			border-color: #2e1c42; /* Divisórias do modal roxas escuras */
 		} @else {
 			border-color: gray;
 		}
@@ -85,6 +84,7 @@ $secondary: #6c757d;
 	.list-group-item {
 		background-color: $player-container-background-color;
 		color: $text-color;
+		border-color: rgba($primary, 0.1);
 
 		&.selected {
 			@if $dark-theme {
@@ -134,12 +134,13 @@ $secondary: #6c757d;
 
 	/* Handle */
 	&::-webkit-scrollbar-thumb {
-		background: #888;
+		background: #4a2b6e; /* Scrollbar roxa */
+		border-radius: 5px;
 	}
 
 	/* Handle on hover */
 	&::-webkit-scrollbar-thumb:hover {
-		background: #555;
+		background: #6f42c1;
 	}
 }
 
@@ -167,32 +168,42 @@ body {
 .data-container {
 	border-style: solid;
 	border-width: 1px;
-	border-color: gray;
+	border-color: #3b2259; /* Bordas das caixas da ficha roxas em vez de cinza */
 	border-radius: 20px;
+	box-shadow: inset 0 0 15px rgba(0,0,0,0.5); /* Sombra interna para dar profundidade */
 }
 
+/* Os inputs com linha embaixo (Nome, Idade, etc) */
 .bottom-text {
 	outline: 0;
 	border-width: 0 0 2px;
+	border-color: rgba($primary, 0.4); /* Linha roxa suave */
+	transition: border-color 0.3s ease;
+	
+	&:focus {
+		border-color: $primary; /* Linha acende roxo forte quando digita */
+	}
 }
 
 .clickable {
 	cursor: pointer;
 }
 
-$navbar-background-color: #303030;
+$navbar-background-color: #190e25; /* Navbar roxa escurecida em vez de #303030 */
 
+/* Remove o brilho VERMELHO feio do bootstrap e coloca roxo */
 .form-control,
 .form-select {
 	border-color: lighten($navbar-background-color, 25%);
 	&:focus {
-		border-color: $navbar-background-color;
-		box-shadow: inset 0 0.25rem 0.25rem rgb(0 0 0 / 8%), 0 0 8px #ff0000;
+		border-color: $primary;
+		box-shadow: inset 0 0.25rem 0.25rem rgb(0 0 0 / 8%), 0 0 8px rgba($primary, 0.6);
 	}
 }
 
 .navbar {
 	background-color: $navbar-background-color;
+	border-bottom: 2px solid #2e1c42;
 }
 
 .editor-container {
@@ -235,6 +246,8 @@ $proggress-bar-height: 40px;
 
 	.progress {
 		height: $proggress-bar-height;
+		background-color: #130a1c; /* Fundo escuro atrás da barra de HP/Sanidade */
+		border: 1px solid #2e1c42;
 	}
 
 	.pogress-label {
@@ -247,6 +260,7 @@ $proggress-bar-height: 40px;
 		transform: translate(-50%, -50%);
 		top: 50%;
 		left: 50%;
+		text-shadow: 1px 1px 3px rgba(0,0,0,0.8); /* Sombra no texto HP pra ler melhor */
 	}
 
 	.progress-button-left {
@@ -264,6 +278,7 @@ $proggress-bar-height: 40px;
 			background: none;
 			border: none;
 			padding: 0;
+			&:hover { color: $primary; } /* Setinhas ficam roxas ao passar o mouse */
 		}
 	}
 
@@ -282,10 +297,17 @@ $proggress-bar-height: 40px;
 			background: none;
 			border: none;
 			padding: 0;
+			&:hover { color: $primary; }
 		}
 	}
 }
 
 .attribute-dice {
 	max-height: $proggress-bar-height;
+	transition: transform 0.2s;
+	
+	&:hover {
+		transform: scale(1.1); /* Dá um zoom no dado quando passa o mouse */
+		filter: drop-shadow(0 0 5px $primary);
+	}
 }

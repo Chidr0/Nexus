@@ -17,19 +17,23 @@ export default function Navbar() {
 	const onNpcSheet = router.pathname.includes('/sheet/npc/');
 	const onAdminPanel = router.pathname.includes('/admin/');
 
+	// A MÁGICA ESTÁ AQUI: Capturamos o playerId da URL (se existir)
+	const playerIdQuery = router.query.playerId ? `?playerId=${router.query.playerId}` : '';
+
 	return (
 		<BootstrapNavbar sticky='top' expand='sm' className='mb-3' variant='dark'>
 			<Container fluid>
-				<BootstrapNavbar.Brand>Open RPG</BootstrapNavbar.Brand>
+				<BootstrapNavbar.Brand>Nexus RPG</BootstrapNavbar.Brand>
 				<BootstrapNavbar.Toggle />
 				<BootstrapNavbar.Collapse>
 					<Nav className='me-auto'>
 						{onPlayerSheet && (
 							<>
-								<Link href='/sheet/player/1' passHref>
+								{/* Injetamos o playerId na URL do botão, assim o Mestre não perde a ficha */}
+								<Link href={`/sheet/player/1${playerIdQuery}`} passHref>
 									<Nav.Link active={isActive('/sheet/player/1')}>Página 1</Nav.Link>
 								</Link>
-								<Link href='/sheet/player/2' passHref>
+								<Link href={`/sheet/player/2${playerIdQuery}`} passHref>
 									<Nav.Link active={isActive('/sheet/player/2')}>Página 2</Nav.Link>
 								</Link>
 							</>
@@ -80,12 +84,12 @@ export default function Navbar() {
 }
 
 function ThemeManager() {
-	const [darkMode, setDarkMode] = useState(true);
+	const[darkMode, setDarkMode] = useState(true);
 
 	useEffect(() => {
 		const theme = localStorage.getItem('application_theme');
 		setDarkMode(theme ? theme === 'dark' : true);
-	}, []);
+	},[]);
 
 	useEffect(() => {
 		if (darkMode) {

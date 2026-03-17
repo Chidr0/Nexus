@@ -39,6 +39,19 @@ export default function PortraitEnvironmentalContainer(props: {
 	nameOrientation: PortraitEnvironmentOrientation;
 }) {
 	const [environment, setEnvironment] = useState(props.environment);
+	const[diceColor, setDiceColor] = useState('000000'); // Cor padrão caso não tenha no link
+
+	// Captura a cor do link e muda o fundo da página inteira
+	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const color = params.get('dicecolor');
+		if (color) {
+			setDiceColor(color);
+			// Pinta o fundo do navegador/OBS com a cor escolhida
+			document.body.style.backgroundColor = `#${color}`;
+			document.body.style.backgroundImage = 'none'; // Remove qualquer fundo escuro do tema
+		}
+	},[]);
 
 	useEffect(() => {
 		props.socket.on('environmentChange', (newValue) =>
@@ -71,6 +84,7 @@ export default function PortraitEnvironmentalContainer(props: {
 				playerId={props.playerId}
 				socket={props.socket}
 				debug={props.debug}
+				diceColor={diceColor}
 			/>
 		</div>
 	);
@@ -89,7 +103,7 @@ function PortraitAttributesContainer(props: {
 	useEffect(() => {
 		setPositionY(Number(localStorage.getItem('attribute-pos-y') || 300));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	},[]);
 
 	useEffect(() => {
 		props.socket.on(
@@ -152,6 +166,7 @@ function PortraitNameContainer(props: {
 	playerName: PortraitPlayerName;
 	playerId: number;
 	debug: boolean;
+	diceColor: string;
 }) {
 	const [playerName, setPlayerName] = useState(props.playerName);
 	const [positionY, setPositionY] = useState(0);
@@ -159,7 +174,7 @@ function PortraitNameContainer(props: {
 	useEffect(() => {
 		setPositionY(Number(localStorage.getItem('name-pos-y') || 300));
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	},[]);
 
 	useEffect(() => {
 		props.socket.on('playerNameChange', (playerId, name) => {
@@ -176,7 +191,7 @@ function PortraitNameContainer(props: {
 			props.socket.off('playerNameChange');
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [props.socket]);
+	},[props.socket]);
 
 	return (
 		<Draggable
@@ -190,7 +205,19 @@ function PortraitNameContainer(props: {
 			}}>
 			<Fade in={props.debug || props.environment === 'idle'}>
 				<div className={styles.nameContainer}>
-					<label className={`${styles.name} nome`}>
+					<label 
+						className={`${styles.name} nome`}
+						style={{
+							display: 'inline-block',
+							// A MÁGICA DA IMAGEM: Rotação subindo levemente
+							transform: 'rotate(-8deg)', 
+							color: 'white',
+							// Sombra que imita um "contorno" escuro (igual da sua imagem)
+							textShadow: '2px 2px 0px #000, -1px -1px 0px #000, 1px -1px 0px #000, -1px 1px 0px #000, 0px 0px 15px rgba(0,0,0,0.5)',
+							textAlign: 'center', // Para o primeiro nome ficar em cima do segundo centralizado
+							lineHeight: '1.1' // Junta as linhas para não ficar um buraco entre o nome e o sobrenome
+						}}
+					>
 						{playerName.show ? playerName.name || 'Desconhecido' : '???'}
 					</label>
 				</div>

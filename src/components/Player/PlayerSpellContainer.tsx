@@ -20,6 +20,7 @@ import { resolveDices } from '../../utils/dice';
 import type { DiceRollEvent } from '../../hooks/useDiceRoll';
 import DiceRollModal from '../Modals/DiceRollModal';
 import useDiceRoll from '../../hooks/useDiceRoll';
+import SpellEditorModal from '../Modals/SpellEditorModal';
 
 type PlayerSpellContainerProps = {
 	title: string;
@@ -40,9 +41,14 @@ export default function PlayerSpellContainer(props: PlayerSpellContainerProps) {
 	);
 	const [loading, setLoading] = useState(false);
 
+	// Estados do Modal de Edição/Criação
+	const [spellEditorModalShow, setSpellEditorModalShow] = useState(false);
+	const [spellEditorData, setSpellEditorData] = useState<Spell | undefined>(undefined);
+	const [spellEditorOperation, setSpellEditorOperation] = useState<'create' | 'edit'>('create');
+
 	const logError = useContext(ErrorLogger);
 	const socket = useContext(Socket);
-	const [diceRoll, rollDice] = useDiceRoll(props.npcId);
+	const[diceRoll, rollDice] = useDiceRoll(props.npcId);
 
 	const socket_spellAdd = useRef<SpellAddEvent>(() => {});
 	const socket_spellRemove = useRef<SpellRemoveEvent>(() => {});
@@ -109,6 +115,35 @@ export default function PlayerSpellContainer(props: PlayerSpellContainerProps) {
 		};
 	});
 
+	// Lógica de Criar Magia Customizada
+	function onSpellCreateSubmit(spell: Spell) {
+		setLoading(true);
+		api
+			.put('/sheet/spell', spell)
+			.then((res) => {
+				return api.put('/sheet/player/spell', { id: res.data.id, npcId: props.npcId });
+			})
+			.then((res) => {
+				const newSpell = res.data.spell as Spell;
+				setPlayerSpells([...playerSpells, newSpell]);
+				setSpellEditorModalShow(false);
+			})
+			.catch(logError)
+			.finally(() => setLoading(false));
+	}
+
+	// Lógica de Editar Magia (Duplo Clique)
+	function onSpellEditSubmit(spell: Spell) {
+		setLoading(true);
+		api
+			.post('/sheet/spell', spell)
+			.catch(logError)
+			.finally(() => {
+				setLoading(false);
+				setSpellEditorModalShow(false);
+			});
+	}
+
 	function onAddSpell(id: number) {
 		setLoading(true);
 		api
@@ -132,7 +167,7 @@ export default function PlayerSpellContainer(props: PlayerSpellContainerProps) {
 	}
 
 	function onDeleteSpell(id: number) {
-		const newPlayerSpells = [...playerSpells];
+		const newPlayerSpells =[...playerSpells];
 		const index = newPlayerSpells.findIndex((spell) => spell.id === id);
 
 		newPlayerSpells.splice(index, 1);
@@ -161,6 +196,24 @@ export default function PlayerSpellContainer(props: PlayerSpellContainerProps) {
 				outline
 				title={props.title}
 				addButton={{ onAdd: () => setAddSpellShow(true), disabled: loading }}>
+				
+				<Row className='mb-3 justify-content-center'>
+					<Col xs='auto'>
+						<Button 
+							size='sm' 
+							variant='secondary' 
+							style={{ backgroundColor: '#6f42c1', borderColor: '#6f42c1' }}
+							onClick={() => {
+								setSpellEditorData(undefined);
+								setSpellEditorOperation('create');
+								setSpellEditorModalShow(true);
+							}}
+						>
+							+ Criar Magia Customizada
+						</Button>
+					</Col>
+				</Row>
+
 				<Row className='mb-2'>
 					<Col className='text-center h5'>
 						<span className='me-2'>Espaços: </span>
@@ -183,6 +236,11 @@ export default function PlayerSpellContainer(props: PlayerSpellContainerProps) {
 							onDelete={onDeleteSpell}
 							showDiceRollResult={rollDice}
 							npcId={props.npcId}
+							onEditBase={() => {
+								setSpellEditorData(spell);
+								setSpellEditorOperation('edit');
+								setSpellEditorModalShow(true);
+							}}
 						/>
 					))}
 				</Row>
@@ -195,6 +253,17 @@ export default function PlayerSpellContainer(props: PlayerSpellContainerProps) {
 				onAddData={onAddSpell}
 				disabled={loading}
 			/>
+			<SpellEditorModal
+				show={spellEditorModalShow}
+				onHide={() => setSpellEditorModalShow(false)}
+				data={spellEditorData as Spell}
+				operation={spellEditorOperation}
+				onSubmit={(spell) => {
+					if (spellEditorOperation === 'create') onSpellCreateSubmit(spell);
+					else onSpellEditSubmit(spell);
+				}}
+				disabled={loading}
+			/>
 			<DiceRollModal {...diceRoll} />
 		</>
 	);
@@ -204,6 +273,7 @@ type PlayerSpellFieldProps = {
 	spell: Spell;
 	onDelete: (id: number) => void;
 	showDiceRollResult: DiceRollEvent;
+	onEditBase: () => void;
 	npcId?: number;
 };
 
@@ -211,6 +281,7 @@ function PlayerSpellField({
 	spell,
 	onDelete,
 	showDiceRollResult,
+	onEditBase,
 	npcId
 }: PlayerSpellFieldProps) {
 	const logError = useContext(ErrorLogger);
@@ -238,14 +309,23 @@ function PlayerSpellField({
 			<Row>
 				<Col className='data-container mx-3'>
 					<Row className='mt-2'>
-						<Col className='h2'>
+						<Col 
+							className='h2'
+							onDoubleClick={onEditBase} 
+							title="Dê um duplo clique para editar esta magia."
+							style={{ cursor: 'pointer', color: '#b175ff', textDecoration: 'underline' }}
+						>
 							{spell.name}
 							<Button
 								aria-label='Apagar'
 								className='ms-3'
 								variant='secondary'
 								size='sm'
-								onClick={deleteSpell}
+								style={{ verticalAlign: 'middle', textDecoration: 'none' }}
+								onClick={(e) => {
+									e.stopPropagation(); // Impede o clique de ativar o duplo clique sem querer
+									deleteSpell();
+								}}
 								disabled={loading}>
 								{loading ? <CustomSpinner /> : 'Apagar'}
 							</Button>
@@ -266,7 +346,7 @@ function PlayerSpellField({
 							{spell.damage !== '-' && (
 								<Image
 									alt='Dado'
-									src='/dice20.webp'
+									src='/dice20.png'
 									className='clickable'
 									onClick={diceRoll}
 									style={{ maxHeight: '2rem' }}
