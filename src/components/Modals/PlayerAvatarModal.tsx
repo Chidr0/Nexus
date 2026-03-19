@@ -100,43 +100,57 @@ export default function PlayerAvatarModal(props: PlayerAvatarModalProps) {
 	);
 }
 
-// Componente auxiliar para o Dropzone
 function AvatarDropzone({ avatar, onDrop }: { avatar: AvatarData; onDrop: (files: File[], id: number | null) => void }) {
-	const { getRootProps, getInputProps, isDragActive } = useDropzone({
+	const { getRootProps, getInputProps, isDragActive, open } = useDropzone({
 		onDrop: (files) => onDrop(files, avatar.id),
-		accept: { 'image/*': [] },
-		multiple: false
+		accept: {
+			'image/png': ['.png'],
+			'image/jpeg': ['.jpg', '.jpeg'],
+			'image/webp': ['.webp'],
+			'image/gif': ['.gif']
+		},
+		multiple: false,
+		noClick: true 
 	});
 
 	return (
 		<div className='mb-4'>
-			<FormLabel>Avatar ({avatar.name})</FormLabel>
+			<FormLabel style={{ color: '#c4a7e7' }}>Avatar ({avatar.name})</FormLabel>
 			<div
 				{...getRootProps()}
+				onClick={open}
 				style={{
-					border: isDragActive ? '2px dashed #0d6efd' : '2px dashed #444',
+					border: isDragActive ? '2px dashed #b175ff' : '2px dashed #4a2377',
 					padding: '15px',
 					textAlign: 'center',
 					cursor: 'pointer',
 					borderRadius: '10px',
-					backgroundColor: '#212529'
+					backgroundColor: '#150d22',
+					transition: 'all 0.2s ease'
 				}}>
 				<input {...getInputProps()} />
 				{avatar.link ? (
-					<img
-						src={avatar.link}
-						alt={avatar.name}
-						style={{
-							width: '100px',
-							height: '100px',
-							borderRadius: '50%',
-							objectFit: 'cover',
-							border: '2px solid #fff'
-						}}
-					/>
+					<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+						<img
+							src={avatar.link}
+							alt={avatar.name}
+							style={{
+								width: '120px',
+								height: '120px',
+								borderRadius: '50%',
+								objectFit: 'cover',
+								border: '2px solid #8a2be2',
+								pointerEvents: 'none' // 4. Impede que a foto roube o clique do mouse!
+							}}
+						/>
+						<span style={{ color: '#b175ff', marginTop: '10px', fontSize: '0.85rem', fontWeight: 'bold' }}>
+							Clique para trocar a imagem
+						</span>
+					</div>
 				) : (
-					<div style={{ padding: '20px', color: '#aaa' }}>
-						Clique ou arraste aqui
+					<div style={{ padding: '20px', color: '#9d8db3' }}>
+						<p style={{ margin: 0 }}>Arraste uma imagem aqui</p>
+						<span style={{ color: '#8a2be2', fontWeight: 'bold' }}>ou clique para selecionar</span>
 					</div>
 				)}
 			</div>
