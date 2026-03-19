@@ -17,19 +17,24 @@ export default function PortraitAvatar(props: {
 	socket: SocketIO;
 }) {
 	const [src, setSrc] = useState('#');
-	const [showAvatar, setShowAvatar] = useState(false);
+	const[showAvatar, setShowAvatar] = useState(false);
 	const [attributeStatus, setAttributeStatus] = useState(props.attributeStatus);
 	const previousStatusID = useRef(Number.MAX_SAFE_INTEGER);
+	
+	const [diceColor, setDiceColor] = useState('');
 
 	useEffect(() => {
+		const params = new URLSearchParams(window.location.search);
+		const color = params.get('dicecolor');
+		if (color) setDiceColor(color);
+
 		const id = attributeStatus.find((stat) => stat.value)?.attribute_status_id || 0;
 		previousStatusID.current = id;
 		api
 			.get(`/sheet/player/avatar/${id}`, { params: { playerID: props.playerId } })
 			.then((res) => setSrc(`${res.data.link}?v=${Date.now()}`))
 			.catch(() => setSrc('/avatar404.png'));
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	},[]);
 
 	const socket_playerAttributeStatusChange = useRef<PlayerAttributeStatusChangeEvent>(
 		() => {}
@@ -72,12 +77,15 @@ export default function PortraitAvatar(props: {
 		return () => {
 			props.socket.off('playerAttributeStatusChange');
 		};
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [props.socket]);
 
 	return (
 		<Fade in={showAvatar}>
-			<div>
+			<div 
+				style={{
+					filter: diceColor ? `drop-shadow(0 0 15px #${diceColor})` : 'none'
+				}}
+			>
 				<Image
 					src={src}
 					alt='Avatar'
