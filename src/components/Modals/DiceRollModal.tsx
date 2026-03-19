@@ -24,8 +24,8 @@ export type DiceRollModalProps = DiceRoll & {
 };
 
 export default function DiceRollModal(props: DiceRollModalProps) {
-	const[dices, setDices] = useState(props.dices);
-	const [num, setNum] = useState(1);
+	const [dices, setDices] = useState(props.dices);
+	const[num, setNum] = useState(1);
 	const [diceRoll, setDiceRoll] = useState<DiceRollResult>({ dices: null });
 	const lastRoll = useRef<DiceRollResult>({ dices: null });
 	const diceRef = useRef<DiceRollResult | null>(null);
@@ -51,7 +51,7 @@ export default function DiceRollModal(props: DiceRollModalProps) {
 		}
 		setDices(props.dices);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	},[props.dices]);
+	}, [props.dices]);
 
 	function onNumChange(coeff: number) {
 		setNum((n) => {
@@ -126,8 +126,8 @@ export default function DiceRollModal(props: DiceRollModalProps) {
 				npcId={props.npcId}
 				onHide={() => {
 					setDiceRoll({ dices: null });
-					props.onHide();
 				}}
+				onCloseModal={() => props.onHide()} // AQUI: Só chama o OnHide final se não for "Rolar Novamente"
 				onRollAgain={() => setDiceRoll(lastRoll.current)}
 			/>
 		</>
@@ -138,11 +138,12 @@ type DiceRollResult = Omit<DiceRoll, 'dices'> & {
 	dices: DiceRequest | DiceRequest[] | null;
 };
 
+// Adicionei o onCloseModal na tipagem para separar as ações
 type DiceRollResultModalProps = Omit<
 	DiceRollModalProps,
 	'dices' | 'resolverKey' | 'onResult'
 > &
-	DiceRollResult;
+	DiceRollResult & { onCloseModal?: () => void };
 
 type DisplayDice = {
 	roll: number | string;
@@ -150,10 +151,10 @@ type DisplayDice = {
 };
 
 function DiceRollResultModal(props: DiceRollResultModalProps) {
-	const [diceResults, setDiceResults] = useState<DiceResponse[]>([]);
-	const [descriptionFade, setDescriptionFade] = useState(false);
+	const[diceResults, setDiceResults] = useState<DiceResponse[]>([]);
+	const[descriptionFade, setDescriptionFade] = useState(false);
 	
-	// Estado para a Cor do Dado (Padrão: Nosso roxo neon)
+	// Estado para a Cor do Dado escolhida pelo jogador (Roxo Neon padrão)
 	const [diceColor, setDiceColor] = useState('#8a2be2');
 
 	const logError = useContext(ErrorLogger);
@@ -161,13 +162,13 @@ function DiceRollResultModal(props: DiceRollResultModalProps) {
 	const rollAgain = useRef(false);
 	const descriptionDelayTimeout = useRef<NodeJS.Timeout | null>(null);
 
-	// Carrega a cor salva no PC do jogador assim que o modal abre
+	// Carrega a cor salva assim que a tela abre
 	useEffect(() => {
 		const savedColor = localStorage.getItem('playerDiceColor');
 		if (savedColor) setDiceColor(savedColor);
 	},[]);
 
-	// Salva a nova cor sempre que o jogador mudar
+	// Salva a cor no navegador quando o jogador mudar
 	function handleColorChange(color: string) {
 		setDiceColor(color);
 		localStorage.setItem('playerDiceColor', color);
@@ -220,7 +221,7 @@ function DiceRollResultModal(props: DiceRollResultModalProps) {
 			}
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [diceResults]);
+	},[diceResults]);
 
 	useEffect(() => {
 		if (props.dices === null) return;
@@ -253,12 +254,20 @@ function DiceRollResultModal(props: DiceRollResultModalProps) {
 			clearTimeout(descriptionDelayTimeout.current);
 			descriptionDelayTimeout.current = null;
 		}
+		
+		// Esconde apenas o modal do resultado atual
 		props.onHide();
+
+		// A MÁGICA: Só chama o OnClose (que fecha tudo) se não formos rolar de novo!
+		if (!rollAgain.current && props.onCloseModal) {
+			props.onCloseModal();
+		}
 	}
 
 	function onExited() {
 		setDiceResults([]);
 		setDescriptionFade(false);
+		// Se o botão "Rolar Novamente" foi clicado, ele dispara a nova rolagem aqui
 		if (rollAgain.current) props.onRollAgain();
 		rollAgain.current = false;
 	}
@@ -277,13 +286,13 @@ function DiceRollResultModal(props: DiceRollResultModalProps) {
 				name: 'Rolar Novamente',
 				onApply: () => {
 					rollAgain.current = true;
-					onHide();
+					onHide(); // Fecha este para o onExited disparar a nova rolagem
 				},
 				disabled: !result,
 			}}
 			bodyStyle={{ minHeight: 120, display: 'flex', alignItems: 'center' }}>
 			
-			{/* Seletor de Cor do Dado - No canto superior direito do modal */}
+			{/* Seletor de Cor do Dado - Mantendo a preferência do jogador */}
 			<div style={{ position: 'absolute', top: '15px', right: '50px', display: 'flex', alignItems: 'center', gap: '8px' }}>
 				<label style={{ fontSize: '0.8rem', color: '#9d8db3' }}>Cor do Dado:</label>
 				<input 
@@ -318,7 +327,7 @@ function DiceRollResultModal(props: DiceRollResultModalProps) {
 									color: 'white', 
 									fontWeight: 'bold',
 									fontSize: '4rem',
-									// Efeito Neon na Cor Escolhida
+									// O efeito Neon que você pediu, usando a cor selecionada
 									textShadow: `0 0 10px ${diceColor}, 0 0 20px ${diceColor}` 
 								}}
 							>
